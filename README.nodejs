@@ -1,0 +1,1 @@
+WARNING: The nodejs packages installed on this host are NOT EPEL/Fedora compliant, and lack all of the -devel things including headers and node-gyp (node_g). See <https://github.com/jantman/nodejs-rpm-centos5> for more information.

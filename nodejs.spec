@@ -1,15 +1,20 @@
 %define   _base node
 %define   _dist_ver %(sh /usr/lib/rpm/redhat/dist.sh)
+%define   _name_prefix cmgd_
 
-Name:          %{_base}js
+# the latest version of this spec file will always live in git at:
+# <https://github.com/jantman/nodejs-rpm-centos5/>
+
+Name:          %{_name_prefix}%{_base}js
 Version:       0.10.9
-Release:       1%{?dist}
-Summary:       Node.js is a server-side JavaScript environment that uses an asynchronous event-driven model.
-Packager:      Kazuhisa Hara <kazuhisya@gmail.com>
+Release:       2%{?dist}
+Summary:       Node.js is a server-side JavaScript environment that uses an asynchronous event-driven model. This is a very unofficial package.
 Group:         Development/Libraries
 License:       MIT License
 URL:           http://nodejs.org
 Source0:       %{url}/dist/v%{version}/%{_base}-v%{version}.tar.gz
+# the following is just a warning about lack of -devel, headers, node-gyp
+Source1:       README.nodejs
 BuildRoot:     %{_tmppath}/%{name}-%{version}-%{release}-tmp
 Prefix:        /usr
 Obsoletes:     npm
@@ -32,6 +37,11 @@ Patch0: node-js.centos5.configure.patch
 Node.js is a server-side JavaScript environment that uses an asynchronous event-driven model.
 This allows Node.js to get excellent performance based on the architectures of many Internet applications.
 
+This package is NOT build to Fedora/EPEL specifications - it deviates from them in many ways. Installing this
+package is very different from what you'd get when installing nodejs from EPEL or Fedora repos. It just uses
+the nodejs makefile to build a binary tarball and then packages the contents of that.
+Please see <https://github.com/jantman/nodejs-rpm-centos5> for more information.
+
 %package binary
 Summary: Node.js build binary tarballs
 Group:         Development/Libraries
@@ -42,8 +52,45 @@ URL:           http://nodejs.org
 Node.js is a server-side JavaScript environment that uses an asynchronous event-driven model.
 This allows Node.js to get excellent performance based on the architectures of many Internet applications.
 
+This package is NOT build to Fedora/EPEL specifications - it deviates from them in many ways. Installing this
+package is very different from what you'd get when installing nodejs from EPEL or Fedora repos. It just uses
+the nodejs makefile to build a binary tarball and then packages the contents of that.
+Please see <https://github.com/jantman/nodejs-rpm-centos5> for more information.
+
+%package npm
+Summary: Node.js package manager
+Group:         Development/Libraries
+License:       MIT License
+URL:           http://nodejs.org
+
+%description npm
+Node.js is a server-side JavaScript environment that uses an asynchronous event-driven model.
+This allows Node.js to get excellent performance based on the architectures of many Internet applications.
+
+This package is NOT build to Fedora/EPEL specifications - it deviates from them in many ways. Installing this
+package is very different from what you'd get when installing nodejs from EPEL or Fedora repos. It just uses
+the nodejs makefile to build a binary tarball and then packages the contents of that.
+Please see <https://github.com/jantman/nodejs-rpm-centos5> for more information.
+
+%package devel
+Summary:       Node.js developlment libraries placeholder
+Group:         Development/Libraries
+License:       MIT License
+URL:           http://nodejs.org
+
+%description devel
+This is just a placeholder that puts a warning readme in /usr/share/node and /usr/include/node
+
+Node.js is a server-side JavaScript environment that uses an asynchronous event-driven model.
+This allows Node.js to get excellent performance based on the architectures of many Internet applications.
+
+This package is NOT build to Fedora/EPEL specifications - it deviates from them in many ways. Installing this
+package is very different from what you'd get when installing nodejs from EPEL or Fedora repos. It just uses
+the nodejs makefile to build a binary tarball and then packages the contents of that.
+Please see <https://github.com/jantman/nodejs-rpm-centos5> for more information.
+
 %prep
-rm -rf $RPM_SOURCE_DIR/%{_base}-v%{version}
+rm -rf %{buildroot}
 %setup -q -n %{_base}-v%{version}
 %if "%{_dist_ver}" == ".el5"
 %patch0 -p1
@@ -78,37 +125,58 @@ tar zxvf %{_base}-v%{version}-linux-%{_node_arch}.tar.gz
 
 %install
 rm -rf $RPM_BUILD_ROOT
-mkdir  -p $RPM_BUILD_ROOT/usr
+mkdir  -p $RPM_BUILD_ROOT/%{_prefix}
 cp -Rp $RPM_SOURCE_DIR/%{_base}-v%{version}-linux-%{_node_arch}/* $RPM_BUILD_ROOT/usr/
-mkdir -p $RPM_BUILD_ROOT/usr/share/doc/%{_base}-v%{version}/
+mkdir -p $RPM_BUILD_ROOT/%{_prefix}/share/doc/%{_base}-v%{version}/
+mkdir -p $RPM_BUILD_ROOT/%{_prefix}/share/%{_base}/
+mkdir -p $RPM_BUILD_ROOT/%{_prefix}/include/%{_base}/
 
 for file in ChangeLog LICENSE README.md ; do
-    mv $RPM_BUILD_ROOT/usr/$file $RPM_BUILD_ROOT/usr/share/doc/%{_base}-v%{version}/
+    mv $RPM_BUILD_ROOT/usr/$file $RPM_BUILD_ROOT/%{_prefix}/share/doc/%{_base}-v%{version}/
 done
-mkdir -p $RPM_BUILD_ROOT/usr/share/%{_base}js
-mv $RPM_SOURCE_DIR/%{_base}-v%{version}-linux-%{_node_arch}.tar.gz $RPM_BUILD_ROOT/usr/share/%{_base}js/
+mkdir -p $RPM_BUILD_ROOT/%{_prefix}/share/%{_base}js
+mv $RPM_SOURCE_DIR/%{_base}-v%{version}-linux-%{_node_arch}.tar.gz $RPM_BUILD_ROOT/%{_prefix}/share/%{_base}js/
+
+%{__install} -m0644 %{SOURCE1} ${RPM_BUILD_ROOT}/%{_prefix}/share/%{_base}/README.nodejs
+%{__install} -m0644 %{SOURCE1} ${RPM_BUILD_ROOT}/%{_prefix}/include/%{_base}/README.nodejs
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%{_prefix}/lib/node_modules/npm
 %{_prefix}/share/doc/%{_base}-v%{version}
 %{_prefix}/lib/dtrace/node.d
 %defattr(755,root,root)
 %{_bindir}/node
-%{_bindir}/npm
 
 %doc
-/usr/share/man/man1/node.1.gz
+/%{_prefix}/share/man/man1/node.1.gz
 
 %files binary
 %defattr(-,root,root,-)
 %{_prefix}/share/%{_base}js/%{_base}-v%{version}-linux-%{_node_arch}.tar.gz
 
+%files npm
+%defattr(-,root,root,-)
+%{_prefix}/lib/node_modules/npm
+%{_bindir}/npm
+
+%files devel
+%defattr(-,root,root,-)
+%{_prefix}/share/%{_base}/README.nodejs
+%{_prefix}/include/%{_base}/README.nodejs
+
 
 %changelog
+* Thu Jun  6 2013 Jason Antman <jason@jasonantman.com> 0.10.9-2
+- Forked from Kazuhisa's git repo at https://github.com/kazuhisya/nodejs-rpm
+- Added warnings that this isn't EPEL/Fedora compatible in summary and description
+- Added a name prefix to the package name (_name_prefix) to make the above clear
+- Updated prep from rm -rf $RPM_SOURCE_DIR/%{_base}-v%{version} to rm -rf %{buildroot}
+- Split npm into a subpackage
+- Added a devel subpackage with just README.nodejs warning about missing devel
+- Changed /usr/ to /%{_prefix}/ in spec
 * Sat Jun  1 2013 Kazuhisa Hara <kazuhisya@gmail.com>
 - Updated to node.js version 0.10.9
 * Sun May 26 2013 Kazuhisa Hara <kazuhisya@gmail.com>
