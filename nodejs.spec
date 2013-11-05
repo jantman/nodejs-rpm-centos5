@@ -3,6 +3,7 @@
 %define   _base node
 %define   _dist_ver %(sh /usr/lib/rpm/redhat/dist.sh)
 %define   _name_prefix cmgd_
+%define   _custom ptin
 
 # the latest version of this spec file will always live in git at:
 # <https://github.com/jantman/nodejs-rpm-centos5/>
@@ -10,7 +11,7 @@
 #Name:          %{_name_prefix}%{_base}js
 Name:          %{_base}js
 Version:       0.10.21
-Release:       4.ptin%{?dist}
+Release:       4.{_custom}%{?dist}
 Summary:       Node.js is a server-side JavaScript environment that uses an asynchronous event-driven model. This is a very unofficial package.
 Group:         Development/Libraries
 License:       MIT License
