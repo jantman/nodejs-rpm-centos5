@@ -1,3 +1,5 @@
+%define dist %{expand:%%(/usr/lib/rpm/redhat/dist.sh --dist)}
+
 %define   _base node
 %define   _dist_ver %(sh /usr/lib/rpm/redhat/dist.sh)
 %define   _name_prefix cmgd_
@@ -5,20 +7,24 @@
 # the latest version of this spec file will always live in git at:
 # <https://github.com/jantman/nodejs-rpm-centos5/>
 
-Name:          %{_name_prefix}%{_base}js
-Version:       0.10.9
-Release:       2%{?dist}
+#Name:          %{_name_prefix}%{_base}js
+Name:          %{_base}js
+Version:       0.10.21
+Release:       4.ptin%{?dist}
 Summary:       Node.js is a server-side JavaScript environment that uses an asynchronous event-driven model. This is a very unofficial package.
 Group:         Development/Libraries
 License:       MIT License
 URL:           http://nodejs.org
 Source0:       %{url}/dist/v%{version}/%{_base}-v%{version}.tar.gz
 # the following is just a warning about lack of -devel, headers, node-gyp
-Source1:       README.nodejs
+#Source1:       README.nodejs
 BuildRoot:     %{_tmppath}/%{name}-%{version}-%{release}-tmp
 Prefix:        /usr
-Obsoletes:     npm
-Provides:      npm
+#Obsoletes:     npm
+#Provides:      npm
+Provides: nodejs(abi) = 0.10
+Provides: nodejs(engine) = %{version}
+Provides: nodejs(v8-abi) = 3.14
 BuildRequires: redhat-rpm-config
 BuildRequires: tar
 BuildRequires: gcc
@@ -33,22 +39,8 @@ BuildRequires: python26
 %endif
 Patch0: node-js.centos5.configure.patch
 
+
 %description
-Node.js is a server-side JavaScript environment that uses an asynchronous event-driven model.
-This allows Node.js to get excellent performance based on the architectures of many Internet applications.
-
-This package is NOT build to Fedora/EPEL specifications - it deviates from them in many ways. Installing this
-package is very different from what you'd get when installing nodejs from EPEL or Fedora repos. It just uses
-the nodejs makefile to build a binary tarball and then packages the contents of that.
-Please see <https://github.com/jantman/nodejs-rpm-centos5> for more information.
-
-%package binary
-Summary: Node.js build binary tarballs
-Group:         Development/Libraries
-License:       MIT License
-URL:           http://nodejs.org
-
-%description binary
 Node.js is a server-side JavaScript environment that uses an asynchronous event-driven model.
 This allows Node.js to get excellent performance based on the architectures of many Internet applications.
 
@@ -59,9 +51,11 @@ Please see <https://github.com/jantman/nodejs-rpm-centos5> for more information.
 
 %package npm
 Summary: Node.js package manager
-Group:         Development/Libraries
+group:         Development/Libraries
 License:       MIT License
 URL:           http://nodejs.org
+Obsoletes:     npm
+Provides:      npm = 1.3.11
 
 %description npm
 Node.js is a server-side JavaScript environment that uses an asynchronous event-driven model.
@@ -77,9 +71,15 @@ Summary:       Node.js developlment libraries placeholder
 Group:         Development/Libraries
 License:       MIT License
 URL:           http://nodejs.org
+#
+Requires: %{name}%{?_isa} == %{version}-%{release}
+#Requires: libuv-devel%{?_isa} http-parser-devel%{?_isa} v8-devel%{?_isa}
+#Requires: openssl-devel%{?_isa} c-ares19-devel%{?_isa} zlib-devel%{?_isa}
+#Requires: nodejs-packaging
+
 
 %description devel
-This is just a placeholder that puts a warning readme in /usr/share/node and /usr/include/node
+#This is just a placeholder that puts a warning readme in /usr/share/node and /usr/include/node
 
 Node.js is a server-side JavaScript environment that uses an asynchronous event-driven model.
 This allows Node.js to get excellent performance based on the architectures of many Internet applications.
@@ -88,6 +88,14 @@ This package is NOT build to Fedora/EPEL specifications - it deviates from them 
 package is very different from what you'd get when installing nodejs from EPEL or Fedora repos. It just uses
 the nodejs makefile to build a binary tarball and then packages the contents of that.
 Please see <https://github.com/jantman/nodejs-rpm-centos5> for more information.
+
+%package docs
+Summary: Node.js API documentation
+Group: Documentation
+#BuildArch: noarch
+
+%description docs
+The API documentation for the Node.js JavaScript runtime.
 
 %prep
 rm -rf %{buildroot}
@@ -131,14 +139,37 @@ mkdir -p $RPM_BUILD_ROOT/%{_prefix}/share/doc/%{_base}-v%{version}/
 mkdir -p $RPM_BUILD_ROOT/%{_prefix}/share/%{_base}/
 mkdir -p $RPM_BUILD_ROOT/%{_prefix}/include/%{_base}/
 
+
+# Install the debug binary and set its permissions
+#install -Dpm0755 out/Debug/node %{buildroot}/%{_bindir}/node_g
+
+#install documentation
+mkdir -p %{buildroot}%{_defaultdocdir}/%{name}-docs-%{version}/html
+cp -pr doc/* %{buildroot}%{_defaultdocdir}/%{name}-docs-%{version}/html
+rm -f %{_defaultdocdir}/%{name}-docs-%{version}/html/nodejs.1
+cp -p LICENSE %{buildroot}%{_defaultdocdir}/%{name}-docs-%{version}/
+
+#install development headers
+#FIXME: we probably don't really need *.h but node-gyp downloads the whole
+#freaking source tree so I can't be sure ATM
+mkdir -p %{buildroot}%{_includedir}/node
+cp -p src/*.h %{buildroot}%{_includedir}/node
+
+#node-gyp needs common.gypi too
+mkdir -p %{buildroot}%{_datadir}/node
+cp -p common.gypi %{buildroot}%{_datadir}/node
+
+
+
+
 for file in ChangeLog LICENSE README.md ; do
     mv $RPM_BUILD_ROOT/usr/$file $RPM_BUILD_ROOT/%{_prefix}/share/doc/%{_base}-v%{version}/
 done
 mkdir -p $RPM_BUILD_ROOT/%{_prefix}/share/%{_base}js
-mv $RPM_SOURCE_DIR/%{_base}-v%{version}-linux-%{_node_arch}.tar.gz $RPM_BUILD_ROOT/%{_prefix}/share/%{_base}js/
+#mv $RPM_SOURCE_DIR/%{_base}-v%{version}-linux-%{_node_arch}.tar.gz $RPM_BUILD_ROOT/%{_prefix}/share/%{_base}js/
 
-%{__install} -m0644 %{SOURCE1} ${RPM_BUILD_ROOT}/%{_prefix}/share/%{_base}/README.nodejs
-%{__install} -m0644 %{SOURCE1} ${RPM_BUILD_ROOT}/%{_prefix}/include/%{_base}/README.nodejs
+#%{__install} -m0644 %{SOURCE1} ${RPM_BUILD_ROOT}/%{_prefix}/share/%{_base}/README.nodejs
+#%{__install} -m0644 %{SOURCE1} ${RPM_BUILD_ROOT}/%{_prefix}/include/%{_base}/README.nodejs
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -153,10 +184,6 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 /%{_prefix}/share/man/man1/node.1.gz
 
-%files binary
-%defattr(-,root,root,-)
-%{_prefix}/share/%{_base}js/%{_base}-v%{version}-linux-%{_node_arch}.tar.gz
-
 %files npm
 %defattr(-,root,root,-)
 %{_prefix}/lib/node_modules/npm
@@ -164,11 +191,26 @@ rm -rf $RPM_BUILD_ROOT
 
 %files devel
 %defattr(-,root,root,-)
-%{_prefix}/share/%{_base}/README.nodejs
-%{_prefix}/include/%{_base}/README.nodejs
+# versao inicial
+#%{_prefix}/share/%{_base}/README.nodejs
+#%{_prefix}/include/%{_base}/README.nodejs
+# versao alterada por mim
+#%{_bindir}/node_g
+%{_includedir}/node
+%{_datadir}/node/common.gypi
 
+%files docs
+%{_defaultdocdir}/%{name}-docs-%{version}
 
 %changelog
+* Mon Nov  4 2013 Sergio Freire <sergio-s-freire@ptinovacao.pt> 0.10.21-4
+- provide missing dependencies nodejs(abi), nodejs(engine) and nodejs(v8-abi)
+- removed README.nodejs
+* Tue Oct 29 2013 Sergio Freire <sergio-s-freire@ptinovacao.pt> 0.10.21-3
+- include distro in RPM release
+* Wed Oct 23 2013 Sergio Freire <sergio-s-freire@ptinovacao.pt> 0.10.21-2
+- updated to upstream v0.10.21
+- first release o package for PTin
 * Thu Jun  6 2013 Jason Antman <jason@jasonantman.com> 0.10.9-2
 - Forked from Kazuhisa's git repo at https://github.com/kazuhisya/nodejs-rpm
 - Added warnings that this isn't EPEL/Fedora compatible in summary and description
