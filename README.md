@@ -7,6 +7,7 @@ This repository is forked from [jantman/nodejs-rpm-centos5](https://github.com/j
 Instead of building three RPMs (nodejs, nodejs-binary (the tarball) and nodejs-debuginfo), the idea was to follow the same packaging guidelines as the ones used in EPEL (for RHEL6).
 This means that the following packages will be created:
  - nodejs, nodejs-npm, nodejs-docs, nodejs-devel
+
 More, "nodejs" package provides the following dependencies (example):
 - nodejs = 0.10.21-4.ptin.el5
 - nodejs(abi) = 0.10
