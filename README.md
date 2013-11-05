@@ -8,10 +8,10 @@ Instead of building three RPMs (nodejs, nodejs-binary (the tarball) and nodejs-d
 This means that the following packages will be created:
  - nodejs, nodejs-npm, nodejs-docs, nodejs-devel
 More, "nodejs" package provides the following dependencies (example):
-nodejs = 0.10.21-4.ptin.el5
-nodejs(abi) = 0.10
-nodejs(engine) = 0.10.21
-nodejs(v8-abi) = 3.14
+- nodejs = 0.10.21-4.ptin.el5
+- nodejs(abi) = 0.10
+- nodejs(engine) = 0.10.21
+- nodejs(v8-abi) = 3.14
 
 NodeJS DO NOT require package dependencies such as v8, libuv, c-ares19 installed in order to run, since NodeJS is built statically along with them. This is different from the NodeJS avaliable in EPEL 6 repository.
 NPM is provided in the main "nodejs" package, which also provides the dependency "nodejs-npm".
